@@ -45,7 +45,8 @@ jobs:
           Write-Host "Loop will run until: $($endTime)"
           
           # 3. حلقة التكرار تستمر طالما أن الوقت الحالي أقل من وقت الانتهاء
-          while (Get-Date -lt $endTime) {
+          # تم إضافة الأقواس حول (Get-Date) لتصحيح الخطأ.
+          while ((Get-Date) -lt $endTime) {
             Write-Host "Alive: $(Get-Date). Remaining..."
             # الانتظار لمدة 30 ثانية قبل التحقق مرة أخرى
             Start-Sleep 30
