@@ -19,37 +19,17 @@ jobs:
         run: |
           powershell -ExecutionPolicy Bypass -File "./Setup.ps1"
 
-      - name: Run keShot
+      - name: Run programs and keep session alive
         shell: powershell
         run: |
-          $path = "$PWD/Downloads/keShot.exe"
-          Start-Process $path
-
-      - name: Run FeelingSurfViewer
-        shell: powershell
-        run: |
-          # يستخدم LOCALAPPDATA لتجنب مشاكل AppData\Roaming
-          $path = "$env:LOCALAPPDATA/Programs/feelingsurfviewer/FeelingSurfViewer.exe"
-          Start-Process $path
-          
-      - name: Keep Alive
-        shell: powershell
-        run: |
-          # 1. تحديد مدة البقاء نشطاً (30 دقيقة)
-          $duration = 30 # المدة بالدقائق
-          
-          # 2. حساب وقت الانتهاء
-          $endTime = (Get-Date).AddMinutes($duration)
-          
-          Write-Host "Start Time: $(Get-Date)"
-          Write-Host "Loop will run until: $($endTime)"
-          
-          # 3. حلقة التكرار تستمر طالما أن الوقت الحالي أقل من وقت الانتهاء
-          # تم إضافة الأقواس حول (Get-Date) لتصحيح الخطأ.
-          while ((Get-Date) -lt $endTime) {
-            Write-Host "Alive: $(Get-Date). Remaining..."
-            # الانتظار لمدة 30 ثانية قبل التحقق مرة أخرى
-            Start-Sleep 30
+          Write-Host "Launching programs..."
+      
+          Start-Process "$PWD/Downloads/keShot.exe"
+          Start-Process "$env:LOCALAPPDATA/Programs/feelingsurfviewer/FeelingSurfViewer.exe"
+      
+          Write-Host "All programs launched."
+          Write-Host "Keeping session alive..."
+      
+          while ($true) {
+            Start-Sleep -Seconds 10
           }
-          
-          Write-Host "Loop finished after $duration minutes."
