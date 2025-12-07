@@ -32,13 +32,25 @@ jobs:
           $path = "$env:LOCALAPPDATA/Programs/feelingsurfviewer/FeelingSurfViewer.exe"
           Start-Process $path
 
-      - name: Run 10KHits Exchanger
+      - name: Run 10KHits Exchanger via Desktop Shortcut
         shell: powershell
         run: |
-          # يستخدم ProgramFiles(x86) للمسار الافتراضي لبرامج 32-بت
-          $path = "$env:ProgramFiles(x86)/10KHits Exchanger/cef/10khits-exchanger.exe"
+          # 1. تحديد مسار الاختصار على سطح مكتب المستخدم الحالي
+          # لاحظ: يجب كتابة اسم الاختصار بدقة كما يظهر على سطح المكتب، مع إضافة ".lnk"
+          $ShortcutName = "10KHits Exchanger.lnk"
+          $DesktopPath = "$env:USERPROFILE\Desktop"
+          
+          # 2. تحديد المسار الكامل للاختصار
+          $path = Join-Path $DesktopPath $ShortcutName
+          
+          # 3. التأكد من وجود الاختصار قبل محاولة تشغيله (للتفادي الأخطاء)
+          if (-not (Test-Path $path)) {
+              Write-Error "Error: Desktop shortcut '$ShortcutName' not found at '$DesktopPath'."
+          }
+          
+          # 4. تشغيل الاختصار
           Start-Process $path
-
+          
       - name: Keep Alive
         shell: powershell
         run: |
