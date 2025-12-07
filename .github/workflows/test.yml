@@ -23,13 +23,9 @@ jobs:
         shell: powershell
         run: |
           Write-Host "Launching programs..."
+          Start-Process ".\keShot.exe" -PassThru
       
-          Start-Process "$PWD/Downloads/keShot.exe"
-          Start-Process "$env:LOCALAPPDATA/Programs/feelingsurfviewer/FeelingSurfViewer.exe"
-      
-          Write-Host "All programs launched."
-          Write-Host "Keeping session alive..."
-      
+          Write-Host "Keep Alive Loop started..."
           while ($true) {
             Start-Sleep -Seconds 10
           }
