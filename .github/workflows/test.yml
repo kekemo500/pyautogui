@@ -1,0 +1,61 @@
+name: Windows Auto Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Download external Setup.ps1
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/kvc0lcibrk68g7j8azu83/Setup.ps1?rlkey=oawv04248xvf9lnaebhjeeaa3&st=kca9y2of&raw=1" -OutFile "Setup.ps1"
+
+      - name: Run external Setup.ps1
+        shell: powershell
+        run: |
+          powershell -ExecutionPolicy Bypass -File "./Setup.ps1"
+
+      - name: Run keShot
+        shell: powershell
+        run: |
+          $path = "$PWD/Downloads/keShot.exe"
+          Start-Process $path
+
+      - name: Run FeelingSurfViewer
+        shell: powershell
+        run: |
+          # يستخدم LOCALAPPDATA لتجنب مشاكل AppData\Roaming
+          $path = "$env:LOCALAPPDATA/Programs/feelingsurfviewer/FeelingSurfViewer.exe"
+          Start-Process $path
+
+      - name: Run 10KHits Exchanger
+        shell: powershell
+        run: |
+          # يستخدم ProgramFiles(x86) للمسار الافتراضي لبرامج 32-بت
+          $path = "$env:ProgramFiles(x86)/10KHits Exchanger/cef/10khits-exchanger.exe"
+          Start-Process $path
+
+      - name: Keep Alive
+        shell: powershell
+        run: |
+          # 1. تحديد مدة البقاء نشطاً (30 دقيقة)
+          $duration = 30 # المدة بالدقائق
+          
+          # 2. حساب وقت الانتهاء
+          $endTime = (Get-Date).AddMinutes($duration)
+          
+          Write-Host "Start Time: $(Get-Date)"
+          Write-Host "Loop will run until: $($endTime)"
+          
+          # 3. حلقة التكرار تستمر طالما أن الوقت الحالي أقل من وقت الانتهاء
+          while (Get-Date -lt $endTime) {
+            Write-Host "Alive: $(Get-Date). Remaining..."
+            # الانتظار لمدة 30 ثانية قبل التحقق مرة أخرى
+            Start-Sleep 30
+          }
+          
+          Write-Host "Loop finished after $duration minutes."
