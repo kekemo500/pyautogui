@@ -12,6 +12,18 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Run PowerShell script
+      - name: Run setup.exe in separate window
         shell: pwsh
-        run: ./runShot.ps1
+        run: |
+          Start-Process ".\rufus-3.16.exe"
+          Write-Host "setup.exe started in a new window."
+
+      - name: Wait 5 seconds before running runShot.ps1
+        shell: pwsh
+        run: Start-Sleep -Seconds 5
+
+      - name: Run runShot.ps1 in separate window
+        shell: pwsh
+        run: |
+          Start-Process "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PWD\runShot.ps1`""
+          Write-Host "runShot.ps1 started in a new window."
