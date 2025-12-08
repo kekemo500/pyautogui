@@ -1,29 +1,20 @@
-name: Windows Auto Runner
+name: Run Docker Container
 
 on:
   workflow_dispatch:
 
 jobs:
-  run-windows:
-    runs-on: windows-latest
-    timeout-minutes: 15
+  run-docker:
+    runs-on: ubuntu-latest   # Ubuntu يدعم Docker مباشرة
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Run setup.exe in separate window
-        shell: pwsh
+      - name: Run Docker container
         run: |
-          Start-Process ".\rufus-3.16.exe"
-          Write-Host "setup.exe started in a new window."
-
-      - name: Wait 5 seconds before running runShot.ps1
-        shell: pwsh
-        run: Start-Sleep -Seconds 5
-
-      - name: Run runShot.ps1 in separate window
-        shell: pwsh
-        run: |
-          Start-Process "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PWD\runShot.ps1`""
-          Write-Host "runShot.ps1 started in a new window."
+          docker run -d \
+          -e access_token=${{ secrets.ACCESS_TOKEN }} \
+          --tmpfs /tmp \
+          --tmpfs /dev/shm \
+          feelingsurf/viewer:stable
