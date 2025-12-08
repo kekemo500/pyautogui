@@ -1,11 +1,12 @@
-name: Run Docker Container
+name: Run Docker Container with Keep-Alive
 
 on:
   workflow_dispatch:
 
 jobs:
   run-docker:
-    runs-on: ubuntu-latest   # Ubuntu يدعم Docker مباشرة
+    runs-on: ubuntu-latest
+    timeout-minutes: 25   # نعطي وقت أطول من 20 دقيقة للتأكد
 
     steps:
       - name: Checkout repo
@@ -18,3 +19,12 @@ jobs:
           --tmpfs /tmp \
           --tmpfs /dev/shm \
           feelingsurf/viewer:stable
+          echo "Container started!"
+
+      - name: Keep-alive for 20 minutes
+        run: |
+          echo "Keeping workflow alive for 20 minutes..."
+          for i in {1..20}; do
+            echo "Minute $i..."
+            sleep 60
+          done
