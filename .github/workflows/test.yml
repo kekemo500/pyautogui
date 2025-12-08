@@ -9,14 +9,9 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Run programs and keep session alive
-        shell: powershell
-        run: |
-          Write-Host "Launching programs..."
-          Start-Process ".\runShot.ps1" -PassThru
-      
-          Write-Host "Keep Alive Loop started..."
-          while ($true) {
-            Start-Sleep -Seconds 10
-          }
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
+      - name: Run PowerShell script
+        shell: pwsh
+        run: ./runShot.ps1
