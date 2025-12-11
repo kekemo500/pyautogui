@@ -11,6 +11,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      #-----------------------------
+      # 1) Detect Linux Distribution
+      #-----------------------------
       - name: Detect Linux Distribution
         id: distro
         run: |
@@ -23,34 +26,76 @@ jobs:
             echo "version=unknown" >> $GITHUB_OUTPUT
           fi
 
+      #-----------------------------
+      # 2) Basic GUI Check
+      #-----------------------------
       - name: Detect GUI Availability
         id: gui
         run: |
           GUI="false"
+          SESSION="none"
 
-          # Check session type (Wayland / X11)
+          # Check Wayland or X11 session
           if [ ! -z "$XDG_SESSION_TYPE" ]; then
             GUI="true"
             SESSION="$XDG_SESSION_TYPE"
           fi
 
-          # Check if display manager exists
+          # Check display managers
           if systemctl list-unit-files | grep -E 'gdm|lightdm|sddm' >/dev/null; then
             GUI="true"
           fi
 
-          # Check if Xorg exists
+          # Check if Xorg installed
           if command -v Xorg >/dev/null 2>&1; then
             GUI="true"
           fi
 
           echo "gui=$GUI" >> $GITHUB_OUTPUT
+          echo "session=$SESSION" >> $GITHUB_OUTPUT
 
+      #-----------------------------
+      # 3) Deep GUI Scan
+      #-----------------------------
+      - name: Deep GUI Scan
+        id: deep_gui
+        run: |
+          GUI=false
+
+          # Check for desktop environment packages
+          if dpkg -l | grep -E 'gnome-shell|ubuntu-desktop|kde-plasma|xfce4|lxde' >/dev/null; then
+            GUI=true
+          fi
+
+          # Check for GTK/QT graphical libraries
+          if dpkg -l | grep -E 'libgtk-3.*|libqt5gui' >/dev/null; then
+            GUI=true
+          fi
+
+          # Check for X11 or Wayland sessions files
+          if [ -d /usr/share/xsessions ] && [ "$(ls -A /usr/share/xsessions)" ]; then
+            GUI=true
+          fi
+          if [ -d /usr/share/wayland-sessions ] && [ "$(ls -A /usr/share/wayland-sessions)" ]; then
+            GUI=true
+          fi
+
+          echo "deep_gui=$GUI" >> $GITHUB_OUTPUT
+
+      #-----------------------------
+      # 4) Print Results
+      #-----------------------------
       - name: Print Results
         run: |
+          echo ""
           echo "===== Linux Distribution ====="
-          echo "Name: ${{ steps.distro.outputs.name }}"
-          echo "Version: ${{ steps.distro.outputs.version }}"
-
+          echo "Name:     ${{ steps.distro.outputs.name }}"
+          echo "Version:  ${{ steps.distro.outputs.version }}"
+          echo ""
           echo "===== GUI Detection ====="
           echo "GUI Present: ${{ steps.gui.outputs.gui }}"
+          echo "Session:     ${{ steps.gui.outputs.session }}"
+          echo ""
+          echo "===== Deep GUI Scan ====="
+          echo "GUI (Deep):  ${{ steps.deep_gui.outputs.deep_gui }}"
+          echo ""
