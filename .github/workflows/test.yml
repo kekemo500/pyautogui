@@ -1,117 +1,36 @@
-name: Detect Linux Environment
+name: Test OrganicHits on Ubuntu
 
 on:
   workflow_dispatch:
 
 jobs:
-  detect:
+  test-organichits:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+    - name: Update APT
+      run: sudo apt-get update
 
-      #-----------------------------
-      # 1) Detect Linux Distribution
-      #-----------------------------
-      - name: Detect Linux Distribution
-        id: distro
-        run: |
-          if [ -f /etc/os-release ]; then
-            . /etc/os-release
-            echo "name=$NAME" >> $GITHUB_OUTPUT
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "name=unknown" >> $GITHUB_OUTPUT
-            echo "version=unknown" >> $GITHUB_OUTPUT
-          fi
+    - name: Install dependencies
+      run: sudo apt-get install -y wget dpkg
 
-      #-----------------------------
-      # 2) Basic GUI Check
-      #-----------------------------
-      - name: Detect GUI Availability
-        id: gui
-        run: |
-          GUI="false"
-          SESSION="none"
+    - name: Download & Install OrganicHits
+      run: |
+        wget -qO organichits.deb https://cdn.organichits.co/download/organichits-exchanger_2.2.4_amd64.deb
+        sudo dpkg -i organichits.deb || true
+        sudo apt-get install -f -y     # Fix dependencies
+        rm organichits.deb
 
-          # Check Wayland or X11 session
-          if [ ! -z "$XDG_SESSION_TYPE" ]; then
-            GUI="true"
-            SESSION="$XDG_SESSION_TYPE"
-          fi
+    - name: Test commands
+      run: |
+        echo "===== Checking binary location ====="
+        which organichits-exchanger || echo "Binary not found"
 
-          # Check display managers
-          if systemctl list-unit-files | grep -E 'gdm|lightdm|sddm' >/dev/null; then
-            GUI="true"
-          fi
+        echo "===== Try running --help ====="
+        organichits-exchanger --help || echo "--help failed"
 
-          # Check if Xorg installed
-          if command -v Xorg >/dev/null 2>&1; then
-            GUI="true"
-          fi
+        echo "===== Try running without args ====="
+        organichits-exchanger || echo "Run failed"
 
-          echo "gui=$GUI" >> $GITHUB_OUTPUT
-          echo "session=$SESSION" >> $GITHUB_OUTPUT
-
-      #-----------------------------
-      # 3) Deep GUI Scan
-      #-----------------------------
-      - name: Deep GUI Scan
-        id: deep_gui
-        run: |
-          GUI=false
-
-          # Check for desktop environment packages
-          if dpkg -l | grep -E 'gnome-shell|ubuntu-desktop|kde-plasma|xfce4|lxde' >/dev/null; then
-            GUI=true
-          fi
-
-          # Check for GTK/QT graphical libraries
-          if dpkg -l | grep -E 'libgtk-3.*|libqt5gui' >/dev/null; then
-            GUI=true
-          fi
-
-          # Check for X11 or Wayland sessions files
-          if [ -d /usr/share/xsessions ] && [ "$(ls -A /usr/share/xsessions)" ]; then
-            GUI=true
-          fi
-          if [ -d /usr/share/wayland-sessions ] && [ "$(ls -A /usr/share/wayland-sessions)" ]; then
-            GUI=true
-          fi
-
-          echo "deep_gui=$GUI" >> $GITHUB_OUTPUT
-
-      #-----------------------------
-      # 4) Print Results
-      #-----------------------------
-      - name: Final Verdict
-        id: verdict
-        run: |
-          BASIC=${{ steps.gui.outputs.gui }}
-          DEEP=${{ steps.deep_gui.outputs.deep_gui }}
-
-          if [ "$BASIC" = "false" ] && [ "$DEEP" = "true" ]; then
-            VERDICT="Libraries-only (no real GUI)"
-          elif [ "$BASIC" = "true" ]; then
-            VERDICT="Full GUI detected"
-          else
-            VERDICT="No GUI"
-          fi
-
-          echo "verdict=$VERDICT" >> $GITHUB_OUTPUT
-
-      - name: Print Results
-        run: |
-          echo ""
-          echo "===== Linux Distribution ====="
-          echo "Name:     ${{ steps.distro.outputs.name }}"
-          echo "Version:  ${{ steps.distro.outputs.version }}"
-          echo ""
-          echo "===== GUI Detection ====="
-          echo "GUI Present: ${{ steps.gui.outputs.gui }}"
-          echo "Session:     ${{ steps.gui.outputs.session }}"
-          echo ""
-          echo "===== Deep GUI Scan ====="
-          echo "GUI (Deep):  ${{ steps.deep_gui.outputs.deep_gui }}"
-          echo ""
+        echo "===== List installed files ====="
+        dpkg -L organichits-exchanger || true
