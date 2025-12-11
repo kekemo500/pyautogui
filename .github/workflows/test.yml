@@ -1,30 +1,56 @@
-name: Run Docker Container with Keep-Alive
+name: Detect Linux Environment
 
 on:
   workflow_dispatch:
 
 jobs:
-  run-docker:
+  detect:
     runs-on: ubuntu-latest
-    timeout-minutes: 25   # نعطي وقت أطول من 20 دقيقة للتأكد
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Run Docker container
+      - name: Detect Linux Distribution
+        id: distro
         run: |
-          docker run -d \
-          -e access_token=${{ secrets.ACCESS_TOKEN }} \
-          --tmpfs /tmp \
-          --tmpfs /dev/shm \
-          feelingsurf/viewer:stable
-          echo "Container started!"
+          if [ -f /etc/os-release ]; then
+            . /etc/os-release
+            echo "name=$NAME" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "name=unknown" >> $GITHUB_OUTPUT
+            echo "version=unknown" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Keep-alive for 20 minutes
+      - name: Detect GUI Availability
+        id: gui
         run: |
-          echo "Keeping workflow alive for 20 minutes..."
-          for i in {1..20}; do
-            echo "Minute $i..."
-            sleep 60
-          done
+          GUI="false"
+
+          # Check session type (Wayland / X11)
+          if [ ! -z "$XDG_SESSION_TYPE" ]; then
+            GUI="true"
+            SESSION="$XDG_SESSION_TYPE"
+          fi
+
+          # Check if display manager exists
+          if systemctl list-unit-files | grep -E 'gdm|lightdm|sddm' >/dev/null; then
+            GUI="true"
+          fi
+
+          # Check if Xorg exists
+          if command -v Xorg >/dev/null 2>&1; then
+            GUI="true"
+          fi
+
+          echo "gui=$GUI" >> $GITHUB_OUTPUT
+
+      - name: Print Results
+        run: |
+          echo "===== Linux Distribution ====="
+          echo "Name: ${{ steps.distro.outputs.name }}"
+          echo "Version: ${{ steps.distro.outputs.version }}"
+
+          echo "===== GUI Detection ====="
+          echo "GUI Present: ${{ steps.gui.outputs.gui }}"
