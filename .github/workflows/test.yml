@@ -85,6 +85,22 @@ jobs:
       #-----------------------------
       # 4) Print Results
       #-----------------------------
+      - name: Final Verdict
+        id: verdict
+        run: |
+          BASIC=${{ steps.gui.outputs.gui }}
+          DEEP=${{ steps.deep_gui.outputs.deep_gui }}
+
+          if [ "$BASIC" = "false" ] && [ "$DEEP" = "true" ]; then
+            VERDICT="Libraries-only (no real GUI)"
+          elif [ "$BASIC" = "true" ]; then
+            VERDICT="Full GUI detected"
+          else
+            VERDICT="No GUI"
+          fi
+
+          echo "verdict=$VERDICT" >> $GITHUB_OUTPUT
+
       - name: Print Results
         run: |
           echo ""
