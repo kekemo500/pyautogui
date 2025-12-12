@@ -29,7 +29,6 @@ jobs:
       run: |
         mkdir organic_dump
 
-        # Read each line from installed_files.txt and copy only existing files
         while read file; do
           if [ -f "$file" ]; then
             mkdir -p "organic_dump/$(dirname "$file")"
@@ -39,10 +38,10 @@ jobs:
 
     - name: Create ZIP archive
       run: |
-        zip -r organic_files.zip organic_dump
+        zip -r organic_files.zip organic_dump installed_files.txt
 
     - name: Upload ZIP as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: organichits-files
         path: organic_files.zip
