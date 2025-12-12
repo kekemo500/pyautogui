@@ -12,25 +12,37 @@ jobs:
       run: sudo apt-get update
 
     - name: Install dependencies
-      run: sudo apt-get install -y wget dpkg
+      run: sudo apt-get install -y wget dpkg zip
 
     - name: Download & Install OrganicHits
       run: |
         wget -qO organichits.deb https://cdn.organichits.co/download/organichits-exchanger_2.2.4_amd64.deb
         sudo dpkg -i organichits.deb || true
-        sudo apt-get install -f -y     # Fix dependencies
+        sudo apt-get install -f -y
         rm organichits.deb
 
-    - name: Test commands
+    - name: List installed files and save list
       run: |
-        echo "===== Checking binary location ====="
-        which organichits-exchanger || echo "Binary not found"
+        dpkg -L organichits-exchanger > installed_files.txt
 
-        echo "===== Try running --help ====="
-        organichits-exchanger --help || echo "--help failed"
+    - name: Copy OrganicHits files into a folder
+      run: |
+        mkdir organic_dump
 
-        echo "===== Try running without args ====="
-        organichits-exchanger || echo "Run failed"
+        # Read each line from installed_files.txt and copy only existing files
+        while read file; do
+          if [ -f "$file" ]; then
+            mkdir -p "organic_dump/$(dirname "$file")"
+            cp "$file" "organic_dump/$file"
+          fi
+        done < installed_files.txt
 
-        echo "===== List installed files ====="
-        dpkg -L organichits-exchanger || true
+    - name: Create ZIP archive
+      run: |
+        zip -r organic_files.zip organic_dump
+
+    - name: Upload ZIP as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: organichits-files
+        path: organic_files.zip
